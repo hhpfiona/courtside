@@ -1,0 +1,31 @@
+{
+  "name": "courtside",
+  "private": true,
+  "type": "module",
+  "description": "Sub-finder and scheduler for rec volleyball leagues",
+  "workspaces": [
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "db:up": "docker compose up -d db",
+    "db:down": "docker compose down",
+    "migrate": "npm run migrate --workspace apps/api",
+    "seed": "npm run seed --workspace apps/api",
+    "dev": "npm run dev --workspace apps/api",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "eslint .",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "format": "prettier --write .",
+    "start": "npm run start --workspace apps/api"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.15.0",
+    "prettier": "^3.10.1",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.73.0"
+  }
+}
