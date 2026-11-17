@@ -5,6 +5,7 @@
  *   npm run seed            # wipes app tables, then inserts sample data
  */
 import { createPool } from "../src/db.js";
+import { LEAGUE_TIME_ZONE } from "../src/domain.js";
 
 type Position =
   | "setter"
@@ -40,20 +41,6 @@ const PLAYERS: Array<[string, Position, Position[]]> = [
   ["Tariq Hassan", "setter", []],
   ["Mei Chen", "defensive_specialist", ["outside"]],
 ];
-
-/** The next date (local time) that falls on `weekday` (0 = Sunday), at hh:mm. */
-function nextWeekday(
-  weekday: number,
-  hh: number,
-  mm: number,
-  weeksAhead = 0,
-): Date {
-  const d = new Date();
-  d.setHours(hh, mm, 0, 0);
-  const diff = (weekday - d.getDay() + 7) % 7 || 7;
-  d.setDate(d.getDate() + diff + weeksAhead * 7);
-  return d;
-}
 
 async function main() {
   const db = createPool();
@@ -111,20 +98,29 @@ async function main() {
         }
       }
 
-      // Three upcoming weekly games at 8 pm.
+      // Three upcoming weekly games at 8 pm league time. The date maths runs
+      // in Postgres so the result doesn't depend on this computer's time zone.
       for (let w = 0; w < 3; w++) {
-        const start = nextWeekday(weekday, 20, 0, w);
-        const end = new Date(start.getTime() + 60 * 60 * 1000);
         const { rows: gr } = await client.query<{ id: number }>(
-          `INSERT INTO games (league_id, home_team_id, away_team_id, starts_at, ends_at, court)
-           VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+          `WITH local AS (SELECT (now() AT TIME ZONE $7)::date AS today),
+                next AS (
+                  SELECT today + (CASE WHEN ($5 - extract(dow FROM today)::int + 7) % 7 = 0
+                                       THEN 7
+                                       ELSE ($5 - extract(dow FROM today)::int + 7) % 7 END)
+                               + 7 * $6 AS day
+                  FROM local),
+                t AS (SELECT (day + time '20:00') AT TIME ZONE $7 AS starts_at FROM next)
+           INSERT INTO games (league_id, home_team_id, away_team_id, starts_at, ends_at, court)
+           SELECT $1, $2, $3, t.starts_at, t.starts_at + interval '1 hour', $4 FROM t
+           RETURNING id`,
           [
             leagueId,
             teamIds[w % 2],
             teamIds[(w + 1) % 2],
-            start,
-            end,
             `Court ${w + 1}`,
+            weekday,
+            w,
+            LEAGUE_TIME_ZONE,
           ],
         );
         // An open request for the first game of each league.
