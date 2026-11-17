@@ -2,7 +2,7 @@
 
 Courtside finds subs for rec volleyball leagues. A captain posts a request such as "need a setter, Thursday 8 pm". Courtside ranks players who play that position and are free then, and the first eligible player to claim the spot gets it. Two players can never both get the same spot.
 
-> **Status:** in progress. Day 1 is done (schema, migrations, sample data, health check). The API, UI, CI and deploy come next.
+> **Status:** in progress. The schema, the players and sub-request API, and the ranking are done. Claiming a spot, the UI, CI and deploy come next.
 
 ## Stack
 
@@ -30,6 +30,32 @@ npm test
 ```
 
 The tests run against a separate `courtside_test` database. Before each run they roll every migration down and back up, so the down migrations get tested as well.
+
+## API
+
+All errors come back as `{ "error": "<code>", "message": "<text>" }`. Request bodies with unknown fields are rejected with a 400 rather than silently ignored.
+
+| Method | Path                           | What it does                                                                                          |
+| ------ | ------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| `GET`  | `/health`                      | `200` if the API can reach the database, `503` if not                                                 |
+| `POST` | `/players`                     | Create a player (`name`, `email`, `primaryPosition`, optional `otherPositions`)                       |
+| `GET`  | `/players/:id`                 | A player and their weekly availability                                                                |
+| `PUT`  | `/players/:id/availability`    | Replace all of a player's weekly windows (`dayOfWeek` 0 = Sunday, `startTime` / `endTime` as `HH:MM`) |
+| `POST` | `/games/:gameId/sub-requests`  | A captain asks for a sub (`teamId`, `position`, `requestedBy`, optional `note`)                       |
+| `GET`  | `/sub-requests?status=open`    | Upcoming requests, soonest first                                                                      |
+| `GET`  | `/sub-requests/:id/candidates` | Eligible subs for an open request, ranked                                                             |
+
+There is no login yet, so `requestedBy` is taken on trust; it will come from the signed-in user once authentication is added.
+
+## How subs are ranked
+
+A player is **eligible** for a request when they play the position (as their main one or another one), aren't on either team, aren't playing or subbing in another game at the same time, and have an availability window that covers the whole game in Toronto time. That filtering happens in one SQL query (`apps/api/src/candidates.ts`).
+
+Eligible players are then **ranked** by a pure function (`apps/api/src/ranking.ts`), so the rules are easy to test and change:
+
+1. Main position matches first.
+2. Then whoever has subbed the least in the last 30 days, so spots get spread around.
+3. Then by name, so the order is always the same.
 
 ## How double-booking is prevented
 
