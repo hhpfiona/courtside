@@ -1,3 +1,5 @@
+// How to talk to Postgres. Creates a connection pool and sets up type parsing for bigint ids.
+
 import pg from "pg";
 
 // Return Postgres bigint ids as JS numbers. Ids here will never pass 2^53.

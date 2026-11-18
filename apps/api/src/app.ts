@@ -1,3 +1,7 @@
+// Puts everything together in one server, registers routes, and handles errors.
+// The Fastify instance is created here, and the database connection is passed to the route handlers.
+// The app is exported for use in the serverless function and for testing.
+
 import Fastify, { type FastifyInstance } from "fastify";
 import type { Db } from "./db.js";
 import { registerErrorHandler } from "./errors.js";

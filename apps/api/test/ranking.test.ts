@@ -1,3 +1,5 @@
+// fast unit test for pure function 
+
 import { describe, expect, it } from "vitest";
 import { rankCandidates, type Candidate } from "../src/ranking.js";
 

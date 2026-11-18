@@ -1,3 +1,6 @@
+// The entry point for the API server. 
+// Creates a database connection pool, builds the Fastify app, and starts listening for requests.
+
 import { buildApp } from "./app.js";
 import { createPool } from "./db.js";
 

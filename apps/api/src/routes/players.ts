@@ -1,3 +1,7 @@
+// Receives HTTP requests related to players and their availability.
+// Checks for valid input, calls into the database to create players, 
+// retrieve player info, update availability, and returns appropriate HTTP status codes.
+
 import type { FastifyInstance } from "fastify";
 import type { Db } from "../db.js";
 import { POSITIONS, type Position } from "../domain.js";

@@ -20,7 +20,7 @@ const PG_FOREIGN_KEY_VIOLATION = "23503";
 const PG_CHECK_VIOLATION = "23514";
 
 /**
- * One place that decides what an error looks like on the wire:
+ * Constant error structure: 
  * `{ "error": "<code>", "message": "<text>" }`.
  */
 export function registerErrorHandler(app: FastifyInstance): void {

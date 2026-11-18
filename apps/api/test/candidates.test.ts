@@ -1,3 +1,5 @@
+// integration test with real Postgres
+
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { findEligibleCandidates } from "../src/candidates.js";
 import {

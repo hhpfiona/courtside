@@ -1,3 +1,5 @@
+// API tests through routes
+
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { buildApp } from "../src/app.js";
 import {

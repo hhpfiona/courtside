@@ -1,3 +1,6 @@
+// Fetches players who are eligible to fill a sub request using SQL,
+// based on position, team membership, game conflicts, and availability.
+
 import type { Db } from "./db.js";
 import { LEAGUE_TIME_ZONE, type Position } from "./domain.js";
 import type { Candidate } from "./ranking.js";

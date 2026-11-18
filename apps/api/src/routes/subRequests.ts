@@ -1,3 +1,6 @@
+// Fetches players who are eligible to fill a sub request using SQL,
+// based on position, team membership, game conflicts, and availability.
+
 import type { FastifyInstance } from "fastify";
 import { findEligibleCandidates } from "../candidates.js";
 import type { Db } from "../db.js";
