@@ -2,7 +2,7 @@
 
 Courtside finds subs for rec volleyball leagues. A captain posts a request such as "need a setter, Thursday 8 pm". Courtside ranks players who play that position and are free then, and the first eligible player to claim the spot gets it. Two players can never both get the same spot.
 
-> **Status:** in progress. The schema, the players and sub-request API, and the ranking are done. Claiming a spot, the UI, CI and deploy come next.
+> **Status:** in progress. The schema, the players and sub-request API, and the ranking are done. Currently working on claiming a spot, the UI, CI, and deploy.
 
 ## Stack
 
@@ -33,7 +33,7 @@ The tests run against a separate `courtside_test` database. Before each run they
 
 ## API
 
-All errors come back as `{ "error": "<code>", "message": "<text>" }`. Request bodies with unknown fields are rejected with a 400 rather than silently ignored.
+All errors come back as `{ "error": "<code>", "message": "<text>" }`. Request bodies with unknown fields are rejected with a 400.
 
 | Method | Path                           | What it does                                                                                          |
 | ------ | ------------------------------ | ----------------------------------------------------------------------------------------------------- |
@@ -45,13 +45,13 @@ All errors come back as `{ "error": "<code>", "message": "<text>" }`. Request bo
 | `GET`  | `/sub-requests?status=open`    | Upcoming requests, soonest first                                                                      |
 | `GET`  | `/sub-requests/:id/candidates` | Eligible subs for an open request, ranked                                                             |
 
-There is no login yet, so `requestedBy` is taken on trust; it will come from the signed-in user once authentication is added.
+There is no login yet so `requestedBy` currently bypasses any checks. Once authentication is added, `requestedBy` will come from the signed-in user.
 
 ## How subs are ranked
 
-A player is **eligible** for a request when they play the position (as their main one or another one), aren't on either team, aren't playing or subbing in another game at the same time, and have an availability window that covers the whole game in Toronto time. That filtering happens in one SQL query (`apps/api/src/candidates.ts`).
+A player is **eligible** for a request when they play the position (as their main one or another one), aren't on either team, aren't playing or subbing in another game at the same time, and have an availability window that covers the whole game in Toronto time. Filtering is done via the SQL query (`apps/api/src/candidates.ts`).
 
-Eligible players are then **ranked** by a pure function (`apps/api/src/ranking.ts`), so the rules are easy to test and change:
+Eligible players are then **ranked** by a pure function (`apps/api/src/ranking.ts`). Rules are currently as follows (subject to change after testing):
 
 1. Main position matches first.
 2. Then whoever has subbed the least in the last 30 days, so spots get spread around.
@@ -59,10 +59,10 @@ Eligible players are then **ranked** by a pure function (`apps/api/src/ranking.t
 
 ## How double-booking is prevented
 
-The database enforces it, so it holds even if the application code has a bug:
+The database itself already guards against double-booking in addition to the application code:
 
 - `claims.sub_request_id` is `UNIQUE`: a spot can only be claimed once.
 - `UNIQUE (player_id, game_id)` on `claims`: one player can't take two spots in the same game.
 - A composite foreign key `(sub_request_id, game_id)`: a claim's game always matches its request's game.
 
-The claim endpoint (Day 3) also locks the request row inside a transaction. That way, when two players claim at the same moment, one gets a success and the other gets a clear "already taken" message, never a raw database error.
+The claim endpoint (Day 3) also locks the request row inside a transaction. So when two players claim at the same moment, one gets a success and the other gets a "already taken" message.
