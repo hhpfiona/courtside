@@ -1,3 +1,5 @@
+// Makes a decision about which eligible players should be offered a sub request first, based on position, recent subs, and name.
+
 import type { Position } from "./domain.js";
 
 /** A player who passed the eligibility checks in the database. */

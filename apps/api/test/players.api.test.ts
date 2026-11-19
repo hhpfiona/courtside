@@ -47,6 +47,8 @@ describe("POST /players", () => {
     expect(res.json()).toMatchObject({ error: "conflict" });
   });
 
+  // make sure that each of these row pass the "reject with 400" test 
+  // it.each runs the same test with every row of data, and the first column ("an unknown position") is used in the test name (%s) 
   it.each([
     ["an unknown position", { ...newPlayer, primaryPosition: "goalie" }],
     ["a bad email", { ...newPlayer, email: "not-an-email" }],
